@@ -9,6 +9,8 @@
 #include "minvm_defs.h"
 #include <stdio.h> // Can probably take this out eventually
 
+void loadi(virtual_machine_t *vm);
+
 // Implement your VM here
 void vm_exec (virtual_machine_t *vm) {
     // Continue running if the halt flag is not set
@@ -17,7 +19,7 @@ void vm_exec (virtual_machine_t *vm) {
         byte opcode = 0xF0 & instruction; // The upper 4 bits of the instruction
         switch (opcode) {
             case 0x00: // LOADI
-                printf("LOADI\n"); break;
+                loadi(vm); break;
             case 0x10: // INC
                 printf("INC\n"); break;
             case 0x20: // DEC
@@ -58,3 +60,10 @@ void vm_exec (virtual_machine_t *vm) {
     //itr_dump_state(vm);
     UNREF(vm);
 }
+
+void loadi(virtual_machine_t *vm) {
+    printf("LOADI\n");
+    UNREF(vm);
+}
+
+
