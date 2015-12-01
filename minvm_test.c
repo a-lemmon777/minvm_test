@@ -5,23 +5,32 @@
 //
 // See README.md for full instructions
 //
+// Author: Aaron Lemmon
+//
 
 #include "minvm_defs.h"
 #include <stdio.h> // Can probably take this out eventually
 
-void loadi(virtual_machine_t *vm);
+const byte registerMasks[] = { REGA, REGB, REGC, REGD };
+void loadi (virtual_machine_t *vm, byte *registers[], byte argument);
+void inc (virtual_machine_t *vm, byte *registers[], byte argument);
 
 // Implement your VM here
 void vm_exec (virtual_machine_t *vm) {
-    // Continue running if the halt flag is not set
-    while (!(vm->flags & MINVM_HALT)) {
-        byte instruction = vm->code[vm->pc];
+    byte *registers[NUM_REGISTERS]; // Used to loop over the registers, making the code less verbose
+    registers[0] = &(vm->a); // Unfortunately, ANSI won't let me inline these
+    registers[1] = &(vm->b);
+    registers[2] = &(vm->c);
+    registers[3] = &(vm->d);
+    while (!(vm->flags & MINVM_HALT)) { // Continue running if the halt flag is not set
+        byte instruction = vm->code[vm->pc++]; // Increments the program counter past the instruction
         byte opcode = 0xF0 & instruction; // The upper 4 bits of the instruction
+        byte argument = 0x0F & instruction; // The lower 4 bits of the instruction
         switch (opcode) {
             case 0x00: // LOADI
-                loadi(vm); break;
+                loadi(vm, registers, argument); break;
             case 0x10: // INC
-                printf("INC\n"); break;
+                inc(vm, registers, argument); break;
             case 0x20: // DEC
                 printf("DEC\n"); break;
             case 0x30: // LOADR
@@ -52,18 +61,38 @@ void vm_exec (virtual_machine_t *vm) {
                 printf("ITR\n"); break;
         }
     }
-    //printf("%02x", instruction);
-    //printf("%02x", opcode);
-    //printf("%d", RAM_SIZE);
-    //printf("%d", !(0x03 & MINVM_HALT));
-    //printf("\n");
-    //itr_dump_state(vm);
     UNREF(vm);
 }
 
-void loadi(virtual_machine_t *vm) {
+void loadi (virtual_machine_t *vm, byte *registers[], byte argument) {
     printf("LOADI\n");
+    if (argument == 0x00) {
+        vm->flags = MINVM_HALT;
+        return;
+    }
+    for (int i = 0; i < NUM_REGISTERS; i++) {
+        if (argument & registerMasks[i]) {
+            *registers[i] = vm->code[vm->pc++]; // Write the byte to the ith register
+        }
+    }
     UNREF(vm);
 }
 
-
+void inc (virtual_machine_t *vm, byte *registers[], byte argument) {
+    printf("INC\n");
+    unsigned long temp = 0; // Relevent registers will be copied here
+    for (int i = NUM_REGISTERS; i >= 0; i--) { // Start with register D, since it should be the most significant byte
+        if (argument & registerMasks[i]) {
+            temp << WORD_SIZE; // Make room for the next value (has no effect if temp is still 0)
+            temp & *registers[i]; // Put value of the register at the end of temp
+        }
+    }
+    temp++;
+    for (int i = 0; i < NUM_REGISTERS; i++) { // Start putting temp back into registers, starting with register A
+        if (argument & registerMasks[i]) {
+            *registers[i] = (byte)temp; // Stores the least significant byte into the register
+            temp = temp >> WORD_SIZE; // Shift values in temp to prepare for next iteration
+        }
+    }
+    UNREF(vm);
+}
