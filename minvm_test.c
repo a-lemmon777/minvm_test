@@ -83,8 +83,8 @@ void inc (virtual_machine_t *vm, byte *registers[], byte argument) {
     unsigned long temp = 0; // Relevent registers will be copied here
     for (int i = NUM_REGISTERS; i >= 0; i--) { // Start with register D, since it should be the most significant byte
         if (argument & registerMasks[i]) {
-            temp << WORD_SIZE; // Make room for the next value (has no effect if temp is still 0)
-            temp & *registers[i]; // Put value of the register at the end of temp
+            temp = temp << WORD_SIZE; // Make room for the next value (has no effect if temp is still 0)
+            temp = temp | *registers[i]; // Put value of the register at the end of temp
         }
     }
     temp++;
