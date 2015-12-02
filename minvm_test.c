@@ -11,10 +11,12 @@
 #include "minvm_defs.h"
 #include <stdio.h> // Can probably take this out eventually
 
-const byte registerMasks[] = { REGA, REGB, REGC, REGD };
+static const byte registerMasks[] = { REGA, REGB, REGC, REGD };
+static const byte bitCountLookup[] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 }; // Used to look up the number of one bits in a half-word
 void loadi (virtual_machine_t *vm, byte *registers[], byte argument);
 void inc (byte *registers[], byte argument);
 void dec (byte *registers[], byte argument);
+void loadr (virtual_machine_t *vm, byte *registers[], byte argument);
 void itr (virtual_machine_t *vm, byte argument);
 
 // Implement your VM here
@@ -36,7 +38,7 @@ void vm_exec (virtual_machine_t *vm) {
             case 0x20: // DEC
                 dec(registers, argument); break;
             case 0x30: // LOADR
-                printf("LOADR\n"); break;
+                loadr(vm, registers, argument); break;
             case 0x40: // ADD
                 printf("ADD\n"); break;
             case 0x50: // SUB
@@ -67,7 +69,7 @@ void vm_exec (virtual_machine_t *vm) {
 
 void loadi (virtual_machine_t *vm, byte *registers[], byte argument) {
     printf("LOADI\n");
-    if (argument == 0x00) {
+    if (argument == 0x00) { // This code halts the virtual machine
         vm->flags = MINVM_HALT;
         return;
     }
@@ -112,6 +114,19 @@ void dec (byte *registers[], byte argument) {
             temp = temp >> WORD_SIZE; // Shift values in temp to prepare for next iteration
         }
     }
+}
+
+void loadr (virtual_machine_t *vm, byte *registers[], byte argument) {
+    printf("LOADR\n");
+    byte secondArgument = vm->code[vm->pc++];
+    byte countOfDestinationRegisters = bitCountLookup[argument];
+    byte countOfSourceRegisters = bitCountLookup[secondArgument];
+    if (countOfDestinationRegisters != countOfSourceRegisters) {
+        vm->flags = MINVM_EXCEPTION | MINVM_HALT;
+        return;
+    }
+    // Put functionality here
+    UNREF(registers);
 }
 
 void itr (virtual_machine_t *vm, byte argument) {
