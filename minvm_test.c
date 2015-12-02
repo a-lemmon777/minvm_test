@@ -14,6 +14,7 @@
 const byte registerMasks[] = { REGA, REGB, REGC, REGD };
 void loadi (virtual_machine_t *vm, byte *registers[], byte argument);
 void inc (byte *registers[], byte argument);
+void dec (byte *registers[], byte argument);
 void itr (virtual_machine_t *vm, byte argument);
 
 // Implement your VM here
@@ -33,7 +34,7 @@ void vm_exec (virtual_machine_t *vm) {
             case 0x10: // INC
                 inc(registers, argument); break;
             case 0x20: // DEC
-                printf("DEC\n"); break;
+                dec(registers, argument); break;
             case 0x30: // LOADR
                 printf("LOADR\n"); break;
             case 0x40: // ADD
@@ -87,6 +88,24 @@ void inc (byte *registers[], byte argument) {
         }
     }
     temp++;
+    for (int i = 0; i < NUM_REGISTERS; i++) { // Start putting temp back into registers, starting with register A
+        if (argument & registerMasks[i]) {
+            *registers[i] = (byte)temp; // Stores the least significant byte into the register
+            temp = temp >> WORD_SIZE; // Shift values in temp to prepare for next iteration
+        }
+    }
+}
+
+void dec (byte *registers[], byte argument) {
+    printf("DEC\n");
+    unsigned long temp = 0; // Relevent registers will be copied here
+    for (int i = NUM_REGISTERS; i >= 0; i--) { // Start with register D, since it should be the most significant byte
+        if (argument & registerMasks[i]) {
+            temp = temp << WORD_SIZE; // Make room for the next value (has no effect if temp is still 0)
+            temp = temp | *registers[i]; // Put value of the register at the end of temp
+        }
+    }
+    temp--;
     for (int i = 0; i < NUM_REGISTERS; i++) { // Start putting temp back into registers, starting with register A
         if (argument & registerMasks[i]) {
             *registers[i] = (byte)temp; // Stores the least significant byte into the register
