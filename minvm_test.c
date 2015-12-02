@@ -13,7 +13,8 @@
 
 const byte registerMasks[] = { REGA, REGB, REGC, REGD };
 void loadi (virtual_machine_t *vm, byte *registers[], byte argument);
-void inc (virtual_machine_t *vm, byte *registers[], byte argument);
+void inc (byte *registers[], byte argument);
+void itr (virtual_machine_t *vm, byte argument);
 
 // Implement your VM here
 void vm_exec (virtual_machine_t *vm) {
@@ -30,7 +31,7 @@ void vm_exec (virtual_machine_t *vm) {
             case 0x00: // LOADI
                 loadi(vm, registers, argument); break;
             case 0x10: // INC
-                inc(vm, registers, argument); break;
+                inc(registers, argument); break;
             case 0x20: // DEC
                 printf("DEC\n"); break;
             case 0x30: // LOADR
@@ -58,10 +59,9 @@ void vm_exec (virtual_machine_t *vm) {
             case 0xE0: // STOR
                 printf("STOR\n"); break;
             case 0xF0: // ITR
-                printf("ITR\n"); break;
+                itr(vm, argument); break;
         }
     }
-    UNREF(vm);
 }
 
 void loadi (virtual_machine_t *vm, byte *registers[], byte argument) {
@@ -75,10 +75,9 @@ void loadi (virtual_machine_t *vm, byte *registers[], byte argument) {
             *registers[i] = vm->code[vm->pc++]; // Write the byte to the ith register
         }
     }
-    UNREF(vm);
 }
 
-void inc (virtual_machine_t *vm, byte *registers[], byte argument) {
+void inc (byte *registers[], byte argument) {
     printf("INC\n");
     unsigned long temp = 0; // Relevent registers will be copied here
     for (int i = NUM_REGISTERS; i >= 0; i--) { // Start with register D, since it should be the most significant byte
@@ -94,5 +93,8 @@ void inc (virtual_machine_t *vm, byte *registers[], byte argument) {
             temp = temp >> WORD_SIZE; // Shift values in temp to prepare for next iteration
         }
     }
-    UNREF(vm);
+}
+
+void itr (virtual_machine_t *vm, byte argument) {
+    (vm->interrupts[argument])(vm); // Calls the interrupt function specified by the index in argument
 }
