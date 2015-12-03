@@ -32,6 +32,7 @@ void vm_exec (virtual_machine_t *vm) {
         byte argument = 0x0F & instruction; // The lower 4 bits of the instruction
         switch (opcode) {
             case 0x00: // LOADI
+                printf("Here's the argument: %02x\n", argument);
                 loadi(vm, registers, argument); break;
             case 0x10: // INC
                 inc(registers, argument); break;
@@ -64,12 +65,15 @@ void vm_exec (virtual_machine_t *vm) {
             case 0xF0: // ITR
                 itr(vm, argument); break;
         }
+        printf("%02x\n", vm->flags);
     }
 }
 
 void loadi (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
     printf("LOADI\n");
     if (destinationRegisterMask == 0x00) { // This code halts the virtual machine
+        printf("In catch\n");
+        printf("%02x\n", destinationRegisterMask);
         vm->flags = MINVM_HALT;
         return;
     }
@@ -147,5 +151,8 @@ void loadr (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMa
 }
 
 void itr (virtual_machine_t *vm, byte interruptFunctionIndex) {
-    (vm->interrupts[interruptFunctionIndex])(vm); // Calls the interrupt function specified by the index
+    printf("doing an interrupt");
+    //(vm->interrupts[interruptFunctionIndex])(vm); // Calls the interrupt function specified by the index
+    UNREF(vm);
+    UNREF(interruptFunctionIndex);
 }
