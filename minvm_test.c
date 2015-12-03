@@ -13,11 +13,11 @@
 
 static const byte registerMasks[] = { REGA, REGB, REGC, REGD };
 static const byte bitCountLookup[] = { 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 }; // Used to look up the number of one bits in a half-word
-void loadi (virtual_machine_t *vm, byte *registers[], byte argument);
-void inc (byte *registers[], byte argument);
-void dec (byte *registers[], byte argument);
-void loadr (virtual_machine_t *vm, byte *registers[], byte argument);
-void itr (virtual_machine_t *vm, byte argument);
+void loadi (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask);
+void inc (byte *registers[], byte operandRegisterMask);
+void dec (byte *registers[], byte operandRegisterMask);
+void loadr (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask);
+void itr (virtual_machine_t *vm, byte interruptFunctionIndex);
 
 // Implement your VM here
 void vm_exec (virtual_machine_t *vm) {
