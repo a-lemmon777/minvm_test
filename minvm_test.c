@@ -245,7 +245,7 @@ void div (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
 void and (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
     byte sourceRegisterMask = vm->code[vm->pc++];
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
-    byte operands[2]; // Storing the operands as 32 bit unsigned integers to handle overflow
+    byte operands[2]; // Storing the operands as a pair of bytes
     byte result;
     printf("AND\n");
 
@@ -260,10 +260,20 @@ void and (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
 }
 
 void or (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
+    byte sourceRegisterMask = vm->code[vm->pc++];
+    byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
+    byte operands[2]; // Storing the operands as a pair of bytes
+    byte result;
     printf("OR\n");
-    UNREF(vm);
-    UNREF(registers);
-    UNREF(destinationRegisterMask);
+
+    if (!isValidSourceRegisterMask(sourceRegisterMask, 2)) { // The count of source registers must equal 2
+        vm->flags = MINVM_EXCEPTION | MINVM_HALT;
+        return;
+    }
+
+    getOperands(operands, registers, sourceRegisterMask); // Copy operands from the registers to the operands array
+    result = operands[0] | operands[1];
+    storeByteInEachRegister(result, registers, destinationRegisterMask, countOfDestinationRegisters);
 }
 
 void xor (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
