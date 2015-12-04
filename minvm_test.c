@@ -281,7 +281,7 @@ void xor (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     byte operands[2]; // Storing the operands as a pair of bytes
     byte result;
-    printf("OR\n");
+    printf("XOR\n");
 
     if (!isValidSourceRegisterMask(sourceRegisterMask, 2)) { // The count of source registers must equal 2
         vm->flags = MINVM_EXCEPTION | MINVM_HALT;
@@ -294,9 +294,23 @@ void xor (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
 }
 
 void rotr (byte *registers[], byte operandRegisterMask) {
+    byte countOfDestinationRegisters = bitCountLookup[operandRegisterMask];
+    byte temp[NUM_REGISTERS]; // Relevant register values are temporarily stored here
+    int index = 0;
+    int registersDone = 0;
+    int currentTempIndex = countOfDestinationRegisters - 1; // Start with the last register
     printf("ROTR\n");
-    UNREF(registers);
-    UNREF(operandRegisterMask);
+
+    getOperands(temp, registers, operandRegisterMask); // Copy values of relevant registers to temp array
+
+    while (registersDone < countOfDestinationRegisters) { // Copy from result to destination registers
+        if (operandRegisterMask & registerMasks[index]) {
+            *registers[index] = temp[currentTempIndex]; // Stores the least significant byte into the register
+            currentTempIndex = (currentTempIndex + 1) % countOfDestinationRegisters; // Increments the tempIndex, with wrap-around
+            ++registersDone;
+        }
+        ++index;
+    }
 }
 
 void jmpneq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask) {
