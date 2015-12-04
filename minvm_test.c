@@ -260,37 +260,25 @@ void rotr (byte *registers[], byte operandRegisterMask) {
 
 void jmpneq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask) {
     byte jumpLocation = vm->code[vm->pc++];
-    byte countOfOperandRegisters = bitCountLookup[operandRegisterMask];
-    byte operands[NUM_REGISTERS]; // Storage for relevant registers
-    int index = 0;
-    int i;
-    if (operandRegisterMask == 0x00) { // This code signals an unconditional jump
+    byte *relevantRegisters[NUM_REGISTERS];
+    byte count = getRelevantRegisters(relevantRegisters, registers, operandRegisterMask);
+    byte index;
+    if (count == 0) {
         vm->pc = jumpLocation;
-        return;
     }
-    if (countOfOperandRegisters == 1) { // Jump if the value of the single register is not 0
-        switch (operandRegisterMask) {
-            case REGA:
-                index = 0; break;
-            case REGB:
-                index = 1; break;
-            case REGC:
-                index = 2; break;
-            case REGD:
-                index = 3; break;
-        }
-        if (*registers[index] != 0x00) {
-            vm->pc = jumpLocation;
-        }
-        return;
-    }
-    getOperands(operands, registers, operandRegisterMask); // Copy values of relevant registers to operands array
-    for (i = 1; i < countOfOperandRegisters; ++i) {
-        if (operands[0] != operands[i]) { // Found different values
+    else if (count == 1) {
+        if (*relevantRegisters[0] != 0x00) {
             vm->pc = jumpLocation;
         }
     }
-    // If we get here, no jump
+    else {
+        for (index = 1; index < count; index++) {
+            if (*relevantRegisters[0] != *relevantRegisters[index]) {
+                vm->pc = jumpLocation;
+                break;
+            }
+        }
+    }
 }
 
 void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask) {
