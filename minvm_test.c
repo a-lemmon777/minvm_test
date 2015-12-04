@@ -403,10 +403,18 @@ void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask) 
 }
 
 void stor (virtual_machine_t *vm, byte *registers[], byte sourceRegisterMask) {
+    byte storeLocation = vm->code[vm->pc++];
+    byte countOfOperandRegisters = bitCountLookup[sourceRegisterMask];
+    byte valuesToStore[NUM_REGISTERS]; // Relevant register values are temporarily stored here
+    int i;
     printf("STOR\n");
-    UNREF(vm);
-    UNREF(registers);
-    UNREF(sourceRegisterMask);
+
+    getOperands(valuesToStore, registers, sourceRegisterMask); // Copy values of relevant registers to valuesToStore
+    
+    for (i = 0; i < countOfOperandRegisters; ++i) {
+        vm->code[storeLocation] = valuesToStore[i];
+        ++storeLocation;
+    }
 }
 
 void itr (virtual_machine_t *vm, byte interruptFunctionIndex) {
