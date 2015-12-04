@@ -135,10 +135,16 @@ void loadr (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMa
     int registersDone;
     byte sourceRegisterMask = vm->code[vm->pc++];
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
-    byte countOfSourceRegisters = bitCountLookup[sourceRegisterMask];
+    byte countOfSourceRegisters;
     byte temp[NUM_REGISTERS]; // bytes read from code locations referenced from the source registers will be stored here temporarily
     printf("LOADR\n");
+
+    if (sourceRegisterMask & 0xF0) { // The upper byte of the sourceRegisterMask must be 0
+        vm->flags = MINVM_EXCEPTION | MINVM_HALT;
+        return;
+    }
     
+    countOfSourceRegisters = bitCountLookup[sourceRegisterMask];
     if (countOfDestinationRegisters != countOfSourceRegisters) { // The number of source and destination registers must match to continue
         vm->flags = MINVM_EXCEPTION | MINVM_HALT;
         return;
