@@ -1,0 +1,6 @@
+PC: 6 (Flags: 0x00): A: 00 B: 01 C: 03 D: 04
+PC: 9 (Flags: 0x00): A: ff B: ff C: 03 D: ff
+PC: 15 (Flags: 0x00): A: 33 B: 66 C: 77 D: 22
+PC: 18 (Flags: 0x00): A: 55 B: 66 C: 00 D: 00
+PC: 21 (Flags: 0x00): A: 55 B: 66 C: 00 D: 00
+HALT PC: 0x16, A: 0x55, B: 0x66, C: 0x00, D: 0x00
