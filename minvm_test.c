@@ -17,6 +17,17 @@ void loadi (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMa
 void inc (byte *registers[], byte operandRegisterMask);
 void dec (byte *registers[], byte operandRegisterMask);
 void loadr (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask);
+void add (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask);
+void sub (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask);
+void mul (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask);
+void div (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask);
+void and (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask);
+void or (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask);
+void xor (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask);
+void rotr (byte *registers[], byte operandRegisterMask);
+void jmpneq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask);
+void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask);
+void stor (virtual_machine_t *vm, byte *registers[], byte sourceRegisterMask);
 void itr (virtual_machine_t *vm, byte interruptFunctionIndex);
 
 // Implement your VM here
@@ -40,27 +51,27 @@ void vm_exec (virtual_machine_t *vm) {
             case 0x30: // LOADR
                 loadr(vm, registers, argument); break;
             case 0x40: // ADD
-                printf("ADD\n"); break;
+                add(vm, registers, argument); break;
             case 0x50: // SUB
-                printf("SUB\n"); break;
+                sub(vm, registers, argument); break;
             case 0x60: // MUL
-                printf("MUL\n"); break;
+                mul(vm, registers, argument); break;
             case 0x70: // DIV
-                printf("DIV\n"); break;
+                div(vm, registers, argument); break;
             case 0x80: // AND
-                printf("AND\n"); break;
+                and(vm, registers, argument); break;
             case 0x90: // OR
-                printf("OR\n"); break;
+                or(vm, registers, argument); break;
             case 0xA0: // XOR
-                printf("XOR\n"); break;
+                xor(vm, registers, argument); break;
             case 0xB0: // ROTR
-                printf("ROTR\n"); break;
+                rotr(registers, argument); break;
             case 0xC0: // JMPNEQ
-                printf("JMPNEQ\n"); break;
+                jmpneq(vm, registers, argument); break;
             case 0xD0: // JMPEQ
-                printf("JMPEQ\n"); break;
+                jmpeq(vm, registers, argument); break;
             case 0xE0: // STOR
-                printf("STOR\n"); break;
+                stor(vm, registers, argument); break;
             case 0xF0: // ITR
                 itr(vm, argument); break;
         }
@@ -146,6 +157,83 @@ void loadr (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMa
     }
 }
 
+void add (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
+    printf("ADD\n");
+    UNREF(vm);
+    UNREF(registers);
+    UNREF(destinationRegisterMask);
+}
+
+void sub (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
+    printf("SUB\n");
+    UNREF(vm);
+    UNREF(registers);
+    UNREF(destinationRegisterMask);
+}
+
+void mul (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
+    printf("MUL\n");
+    UNREF(vm);
+    UNREF(registers);
+    UNREF(destinationRegisterMask);
+}
+
+void div (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
+    printf("DIV\n");
+    UNREF(vm);
+    UNREF(registers);
+    UNREF(destinationRegisterMask);
+}
+
+void and (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
+    printf("AND\n");
+    UNREF(vm);
+    UNREF(registers);
+    UNREF(destinationRegisterMask);
+}
+
+void or (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
+    printf("OR\n");
+    UNREF(vm);
+    UNREF(registers);
+    UNREF(destinationRegisterMask);
+}
+
+void xor (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
+    printf("XOR\n");
+    UNREF(vm);
+    UNREF(registers);
+    UNREF(destinationRegisterMask);
+}
+
+void rotr (byte *registers[], byte operandRegisterMask) {
+    printf("ROTR\n");
+    UNREF(registers);
+    UNREF(operandRegisterMask);
+}
+
+void jmpneq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask) {
+    printf("JMPNEQ\n");
+    UNREF(vm);
+    UNREF(registers);
+    UNREF(operandRegisterMask);
+}
+
+void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask) {
+    printf("JMPEQ\n");
+    UNREF(vm);
+    UNREF(registers);
+    UNREF(operandRegisterMask);
+}
+
+void stor (virtual_machine_t *vm, byte *registers[], byte sourceRegisterMask) {
+    printf("STOR\n");
+    UNREF(vm);
+    UNREF(registers);
+    UNREF(sourceRegisterMask);
+}
+
 void itr (virtual_machine_t *vm, byte interruptFunctionIndex) {
+    printf("ITR\n");
     (vm->interrupts[interruptFunctionIndex])(vm); // Calls the interrupt function specified by the index
 }
