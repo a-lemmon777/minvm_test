@@ -31,6 +31,7 @@ void stor (virtual_machine_t *vm, byte *registers[], byte sourceRegisterMask);
 void itr (virtual_machine_t *vm, byte interruptFunctionIndex);
 unsigned long getLongFromRegisters(byte *registers[], byte operandRegisterMask);
 bool isValidSourceRegisterMask (byte sourceRegisterMask, byte numRequiredRegisters);
+byte getRelevantRegisters (byte *relevantRegisters[], byte *allRegisters[], byte registerMask);
 void getOperands (byte operands[], byte *registers[], byte sourceRegisterMask);
 void storeLongResultInRegisters (unsigned long result, byte *registers[], byte destinationRegisterMask, byte countOfDestinationRegisters);
 void storeByteInEachRegister (byte result, byte *registers[], byte destinationRegisterMask, byte countOfDestinationRegisters);
@@ -435,6 +436,20 @@ bool isValidSourceRegisterMask (byte sourceRegisterMask, byte numRequiredRegiste
         return false;
     }
     return bitCountLookup[sourceRegisterMask] == numRequiredRegisters; // Valid if the mask has exactly the required registers
+}
+
+// Populates the relevantRegisters array with pointers to the registers specified in registerMask
+// Returns the count of relevant registers
+// Proceeds from register A to register D
+byte getRelevantRegisters (byte *relevantRegisters[], byte *allRegisters[], byte registerMask) {
+    byte index;
+    byte count = 0;
+    for (index = 0; index < NUM_REGISTERS; ++index) {
+        if (registerMask & registerMasks[index]) {
+            relevantRegisters[count++] = allRegisters[index];
+        }
+    }
+    return count;
 }
 
 // Copies the values of the registers specified in sourceRegisterMask to the operands array
