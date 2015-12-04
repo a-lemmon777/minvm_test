@@ -90,7 +90,6 @@ void vm_exec (virtual_machine_t *vm) {
 
 void loadi (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
     int i;
-    //printf("LOADI\n");
     if (destinationRegisterMask == 0x00) { // This code halts the virtual machine
         vm->flags = MINVM_HALT;
         return;
