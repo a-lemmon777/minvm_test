@@ -217,7 +217,7 @@ void and (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
 
 void or (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
     byte sourceRegisterMask = vm->code[vm->pc++];
-    byte operands[2]; // Storing the operands as a pair of bytes
+    byte *operands[NUM_REGISTERS];
     byte result;
 
     if (!isValidSourceRegisterMask(sourceRegisterMask, 2)) { // The count of source registers must equal 2
@@ -225,8 +225,8 @@ void or (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask)
         return;
     }
 
-    getOperands(operands, registers, sourceRegisterMask); // Copy operands from the registers to the operands array
-    result = operands[0] | operands[1];
+    getRelevantRegisters(operands, registers, sourceRegisterMask); // Gets the two source registers
+    result = *operands[0] | *operands[1];
     storeByteInEachRegister(result, registers, destinationRegisterMask);
 }
 
