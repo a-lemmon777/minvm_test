@@ -28,11 +28,12 @@ void jmpneq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask)
 void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask);
 void stor (virtual_machine_t *vm, byte *registers[], byte sourceRegisterMask);
 void itr (virtual_machine_t *vm, byte interruptFunctionIndex);
-unsigned long getLongFromRegisters(byte *registers[], byte operandRegisterMask);
-bool isValidSourceRegisterMask (byte sourceRegisterMask, byte numRequiredRegisters);
 byte getRelevantRegisters (byte *relevantRegisters[], byte *allRegisters[], byte registerMask);
+unsigned long getLongFromRegisters (byte *registers[], byte operandRegisterMask);
 void storeLongResultInRegisters (unsigned long result, byte *registers[], byte destinationRegisterMask);
+bool isValidSourceRegisterMask (byte sourceRegisterMask, byte numRequiredRegisters);
 void storeByteInEachRegister (byte result, byte *registers[], byte destinationRegisterMask);
+bool allRegistersEqual (byte *relevantRegisters[], byte count);
 
 // Implement your VM here
 void vm_exec (virtual_machine_t *vm) {
@@ -284,7 +285,6 @@ void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask) 
     byte jumpLocation = vm->code[vm->pc++];
     byte *relevantRegisters[NUM_REGISTERS];
     byte count = getRelevantRegisters(relevantRegisters, registers, operandRegisterMask);
-    byte index;
     if (count == 0) {
         vm->pc = jumpLocation;
     }
@@ -293,12 +293,7 @@ void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask) 
             vm->pc = jumpLocation;
         }
     }
-    else {
-        for (index = 1; index < count; index++) {
-            if (*relevantRegisters[0] != *relevantRegisters[index]) {
-                return;
-            }
-        }
+    else if (allRegistersEqual(relevantRegisters, count)) {
         vm->pc = jumpLocation;
     }
 }
@@ -317,6 +312,20 @@ void itr (virtual_machine_t *vm, byte interruptFunctionIndex) {
     (vm->interrupts[interruptFunctionIndex])(vm); // Calls the interrupt function specified by the index
 }
 
+// Populates the relevantRegisters array with pointers to the registers specified in registerMask
+// Returns the count of relevant registers
+// Proceeds from register A to register D
+byte getRelevantRegisters(byte *relevantRegisters[], byte *allRegisters[], byte registerMask) {
+    byte index;
+    byte count = 0;
+    for (index = 0; index < NUM_REGISTERS; ++index) {
+        if (registerMask & registerMasks[index]) {
+            relevantRegisters[count++] = allRegisters[index];
+        }
+    }
+    return count;
+}
+
 // Concatenates values in the specified registers into a single unsigned long
 unsigned long getLongFromRegisters(byte *registers[], byte operandRegisterMask) {
     byte *sourceRegisters[NUM_REGISTERS];
@@ -329,30 +338,8 @@ unsigned long getLongFromRegisters(byte *registers[], byte operandRegisterMask) 
     return result;
 }
 
-// Checks that a mask has a 0 in the upper byte and encodes a number of registers exactly equal to numRequiredRegisters
-bool isValidSourceRegisterMask (byte sourceRegisterMask, byte numRequiredRegisters) {
-    if (sourceRegisterMask & 0xF0) { // Invalid if the upper byte is not 0
-        return false;
-    }
-    return bitCountLookup[sourceRegisterMask] == numRequiredRegisters; // Valid if the mask has exactly the required registers
-}
-
-// Populates the relevantRegisters array with pointers to the registers specified in registerMask
-// Returns the count of relevant registers
-// Proceeds from register A to register D
-byte getRelevantRegisters (byte *relevantRegisters[], byte *allRegisters[], byte registerMask) {
-    byte index;
-    byte count = 0;
-    for (index = 0; index < NUM_REGISTERS; ++index) {
-        if (registerMask & registerMasks[index]) {
-            relevantRegisters[count++] = allRegisters[index];
-        }
-    }
-    return count;
-}
-
 // Breaks the long result back into 8 byte pieces and stores them in the registers specified in destinationRegisterMask
-void storeLongResultInRegisters (unsigned long result, byte *registers[], byte destinationRegisterMask) {
+void storeLongResultInRegisters(unsigned long result, byte *registers[], byte destinationRegisterMask) {
     byte *destinationRegisters[NUM_REGISTERS];
     byte count = getRelevantRegisters(destinationRegisters, registers, destinationRegisterMask);
     byte index;
@@ -360,6 +347,14 @@ void storeLongResultInRegisters (unsigned long result, byte *registers[], byte d
         *destinationRegisters[index] = (byte)result; // Stores the least significant byte into the register
         result = result >> WORD_SIZE; // Shift values in result to prepare for next iteration
     }
+}
+
+// Checks that a mask has a 0 in the upper byte and encodes a number of registers exactly equal to numRequiredRegisters
+bool isValidSourceRegisterMask (byte sourceRegisterMask, byte numRequiredRegisters) {
+    if (sourceRegisterMask & 0xF0) { // Invalid if the upper byte is not 0
+        return false;
+    }
+    return bitCountLookup[sourceRegisterMask] == numRequiredRegisters; // Valid if the mask has exactly the required registers
 }
 
 // Stores the result byte into each register specified in destinationRegisterMask
@@ -370,4 +365,14 @@ void storeByteInEachRegister (byte result, byte *registers[], byte destinationRe
     for (index = 0; index < count; ++index) {
         *destinationRegisters[index] = result; // Stores the byte into the register
     }
+}
+
+bool allRegistersEqual (byte *relevantRegisters[], byte count) {
+    byte index;
+    for (index = 1; index < count; index++) {
+        if (*relevantRegisters[0] != *relevantRegisters[index]) {
+            return false;
+        }
+    }
+    return true;
 }
