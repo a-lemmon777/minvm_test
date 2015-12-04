@@ -110,34 +110,27 @@ void dec (byte *registers[], byte operandRegisterMask) {
 }
 
 void loadr (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
-    int index;
-    int registersDone;
     byte sourceRegisterMask = vm->code[vm->pc++];
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
-    byte temp[NUM_REGISTERS]; // Bytes read from code locations referenced from the source registers will be stored here temporarily
+    byte data[NUM_REGISTERS]; // Bytes read from code locations referenced from the source registers will be stored here temporarily
+    byte *sourceRegisters[NUM_REGISTERS];
+    byte *destinationRegisters[NUM_REGISTERS];
+    byte count;
+    byte index;
 
     if (!isValidSourceRegisterMask(sourceRegisterMask, countOfDestinationRegisters)) { // The count of source registers must equal the count of destination registers
         vm->flags = MINVM_EXCEPTION | MINVM_HALT;
         return;
     }
 
-    index = 0;
-    registersDone = 0;
-    while (registersDone < countOfDestinationRegisters) { // Copy to temp
-        if (sourceRegisterMask & registerMasks[index]) {
-            temp[registersDone] = vm->code[*registers[index]];
-            ++registersDone;
-        }
-        ++index;
+    count = getRelevantRegisters(sourceRegisters, registers, sourceRegisterMask);
+    for (index = 0; index < count; ++index) {
+        data[index] = vm->code[*sourceRegisters[index]]; // Copy values from code to data array
     }
-    index = 0;
-    registersDone = 0;
-    while (registersDone < countOfDestinationRegisters) { // Copy from temp to destination registers
-        if (destinationRegisterMask & registerMasks[index]) {
-            *registers[index] = temp[registersDone];
-            ++registersDone;
-        }
-        ++index;
+
+    count = getRelevantRegisters(destinationRegisters, registers, destinationRegisterMask);
+    for (index = 0; index < count; ++index) {
+        *destinationRegisters[index] = data[index]; // Copy values to destination registers
     }
 }
 
