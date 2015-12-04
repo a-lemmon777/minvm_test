@@ -136,7 +136,7 @@ void loadr (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMa
 
 void add (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
     byte sourceRegisterMask = vm->code[vm->pc++];
-    byte operands[2]; // Storing the operands as 32 bit unsigned integers to handle overflow
+    byte *operands[NUM_REGISTERS];
     unsigned long result;
 
     if (!isValidSourceRegisterMask(sourceRegisterMask, 2)) { // The count of source registers must equal 2
@@ -144,8 +144,8 @@ void add (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
         return;
     }
 
-    getOperands(operands, registers, sourceRegisterMask); // Copy operands from the registers to the operands array
-    result = (unsigned long)operands[0] + (unsigned long)operands[1];
+    getRelevantRegisters(operands, registers, sourceRegisterMask); // Gets the two source registers
+    result = (unsigned long)*operands[0] + (unsigned long)*operands[1];
     storeLongResultInRegisters(result, registers, destinationRegisterMask); // Store the result back to the destination registers
 }
 
