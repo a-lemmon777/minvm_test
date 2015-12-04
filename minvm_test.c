@@ -246,21 +246,15 @@ void xor (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
 }
 
 void rotr (byte *registers[], byte operandRegisterMask) {
-    byte countOfDestinationRegisters = bitCountLookup[operandRegisterMask];
-    byte temp[NUM_REGISTERS]; // Relevant register values are temporarily stored here
-    int index = 0;
-    int registersDone = 0;
-    int currentTempIndex = countOfDestinationRegisters - 1; // Start with the last register
-
-    getOperands(temp, registers, operandRegisterMask); // Copy values of relevant registers to temp array
-
-    while (registersDone < countOfDestinationRegisters) { // Copy from result to destination registers
-        if (operandRegisterMask & registerMasks[index]) {
-            *registers[index] = temp[currentTempIndex]; // Stores the least significant byte into the register
-            currentTempIndex = (currentTempIndex + 1) % countOfDestinationRegisters; // Increments the tempIndex, with wrap-around
-            ++registersDone;
+    byte *rotatingRegisters[NUM_REGISTERS];
+    byte count = getRelevantRegisters(rotatingRegisters, registers, operandRegisterMask);
+    byte index;
+    if (count >= 2) {// A count of less than two should result in a no-op
+        byte temp = *rotatingRegisters[count - 1];
+        for (index = count - 1; index > 0; --index) {
+            *rotatingRegisters[index] = *rotatingRegisters[index - 1];
         }
-        ++index;
+        *rotatingRegisters[0] = temp;
     }
 }
 
