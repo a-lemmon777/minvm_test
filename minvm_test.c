@@ -174,11 +174,18 @@ void add (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
     int index;
     int registersDone;
     byte sourceRegisterMask = vm->code[vm->pc++];
-    byte countOfSourceRegisters = bitCountLookup[sourceRegisterMask];
+    byte countOfSourceRegisters;
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     unsigned long operands[2]; // storing the operands as 32 bit unsigned integers to handle overflow
     unsigned long result;
     printf("ADD\n");
+
+    if (sourceRegisterMask & 0xF0) { // The upper byte of the sourceRegisterMask must be 0
+        vm->flags = MINVM_EXCEPTION | MINVM_HALT;
+        return;
+    }
+
+    countOfSourceRegisters = bitCountLookup[sourceRegisterMask];
     if (countOfSourceRegisters != 2) { // The number of source registers must equal 2
         vm->flags = MINVM_EXCEPTION | MINVM_HALT;
         return;
