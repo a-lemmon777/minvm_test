@@ -31,7 +31,6 @@ void itr (virtual_machine_t *vm, byte interruptFunctionIndex);
 unsigned long getLongFromRegisters(byte *registers[], byte operandRegisterMask);
 bool isValidSourceRegisterMask (byte sourceRegisterMask, byte numRequiredRegisters);
 byte getRelevantRegisters (byte *relevantRegisters[], byte *allRegisters[], byte registerMask);
-void getOperands (byte operands[], byte *registers[], byte sourceRegisterMask);
 void storeLongResultInRegisters (unsigned long result, byte *registers[], byte destinationRegisterMask);
 void storeByteInEachRegister (byte result, byte *registers[], byte destinationRegisterMask);
 
@@ -350,20 +349,6 @@ byte getRelevantRegisters (byte *relevantRegisters[], byte *allRegisters[], byte
         }
     }
     return count;
-}
-
-// Copies the values of the registers specified in sourceRegisterMask to the operands array
-void getOperands (byte operands[], byte *registers[], byte sourceRegisterMask) {
-    byte countOfSourceRegisters = bitCountLookup[sourceRegisterMask];
-    int index = 0;
-    int registersdone = 0;
-    while (registersdone < countOfSourceRegisters) { // Copy to operands array
-        if (sourceRegisterMask & registerMasks[index]) {
-            operands[registersdone] = *registers[index];
-            ++registersdone;
-        }
-        ++index;
-    }
 }
 
 // Breaks the long result back into 8 byte pieces and stores them in the registers specified in destinationRegisterMask
