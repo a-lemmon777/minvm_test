@@ -320,15 +320,14 @@ void itr (virtual_machine_t *vm, byte interruptFunctionIndex) {
 
 // Concatenates values in the specified registers into a single unsigned long
 unsigned long getLongFromRegisters(byte *registers[], byte operandRegisterMask) {
-    int i;
-    unsigned long temp = 0; // Relevent registers will be copied here, using a 32 bit unsigned integer to handle overflow
-    for (i = NUM_REGISTERS - 1; i >= 0; --i) { // Start with register D, since it should be the most significant byte
-        if (operandRegisterMask & registerMasks[i]) {
-            temp = temp << WORD_SIZE; // Make room for the next value (has no effect if temp is still 0)
-            temp = temp | *registers[i]; // Put value of the register at the end of temp
-        }
+    byte *sourceRegisters[NUM_REGISTERS];
+    unsigned long result = 0;
+    byte count = getRelevantRegisters(sourceRegisters, registers, operandRegisterMask);
+    byte index;
+    for (index = 0; index < count; ++index) {
+        result = result | (*sourceRegisters[index] << (WORD_SIZE * index)); // Place values from right to left
     }
-    return temp;
+    return result;
 }
 
 // Checks that a mask has a 0 in the upper byte and encodes a number of registers exactly equal to numRequiredRegisters
