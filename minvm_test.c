@@ -30,6 +30,7 @@ void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask);
 void stor (virtual_machine_t *vm, byte *registers[], byte sourceRegisterMask);
 void itr (virtual_machine_t *vm, byte interruptFunctionIndex);
 bool isValidSourceRegisterMask (byte sourceRegisterMask, byte numRequiredRegisters);
+void getOperandsAsLongs (unsigned long operandArray[], byte *registers[], byte sourceRegisterMask);
 
 // Implement your VM here
 void vm_exec (virtual_machine_t *vm) {
@@ -178,15 +179,7 @@ void add (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
         return;
     }
 
-    index = 0;
-    registersDone = 0;
-    while (registersDone < 2) { // Copy to operands array
-        if (sourceRegisterMask & registerMasks[index]) {
-            operands[registersDone] = *registers[index];
-            ++registersDone;
-        }
-        ++index;
-    }
+    getOperandsAsLongs(operands, registers, sourceRegisterMask);
     result = operands[0] + operands[1];
     index = 0;
     registersDone = 0;
@@ -281,4 +274,17 @@ bool isValidSourceRegisterMask (byte sourceRegisterMask, byte numRequiredRegiste
         return false;
     }
     return bitCountLookup[sourceRegisterMask] == numRequiredRegisters; // Valid if the mask has exactly the required registers
+}
+
+void getOperandsAsLongs (unsigned long operandArray[], byte *registers[], byte sourceRegisterMask) {
+    byte countOfSourceRegisters = bitCountLookup[sourceRegisterMask];
+    int index = 0;
+    int registersdone = 0;
+    while (registersdone < countOfSourceRegisters) { // copy to operands array
+        if (sourceRegisterMask & registerMasks[index]) {
+            operandArray[registersdone] = *registers[index];
+            ++registersdone;
+        }
+        ++index;
+    }
 }
