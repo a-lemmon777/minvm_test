@@ -1,0 +1,7 @@
+PC: 6 (Flags: 0x00): A: 22 B: 22 C: 22 D: 00
+PC: 17 (Flags: 0x00): A: 22 B: 22 C: 22 D: 00
+PC: 20 (Flags: 0x00): A: 22 B: 22 C: 22 D: 00
+PC: 33 (Flags: 0x00): A: 22 B: 22 C: 22 D: 00
+PC: 36 (Flags: 0x00): A: 22 B: 22 C: 22 D: 00
+PC: 49 (Flags: 0x00): A: 22 B: 22 C: 22 D: 00
+HALT PC: 0x32, A: 0x22, B: 0x22, C: 0x22, D: 0x00
