@@ -306,15 +306,11 @@ void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask) 
 
 void stor (virtual_machine_t *vm, byte *registers[], byte sourceRegisterMask) {
     byte storeLocation = vm->code[vm->pc++];
-    byte countOfOperandRegisters = bitCountLookup[sourceRegisterMask];
-    byte valuesToStore[NUM_REGISTERS]; // Relevant register values are temporarily stored here
-    int i;
-
-    getOperands(valuesToStore, registers, sourceRegisterMask); // Copy values of relevant registers to valuesToStore
-    
-    for (i = 0; i < countOfOperandRegisters; ++i) {
-        vm->code[storeLocation] = valuesToStore[i];
-        ++storeLocation;
+    byte *sourceRegisters[NUM_REGISTERS];
+    byte count = getRelevantRegisters(sourceRegisters, registers, sourceRegisterMask);
+    byte index;
+    for (index = 0; index < count; ++index) {
+        vm->code[storeLocation++] = *sourceRegisters[index];
     }
 }
 
