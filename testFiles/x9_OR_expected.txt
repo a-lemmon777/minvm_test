@@ -1,0 +1,5 @@
+PC: 6 (Flags: 0x00): A: 3a B: b4 C: 5c D: 11
+PC: 9 (Flags: 0x00): A: 3a B: 5d C: 5d D: 11
+PC: 12 (Flags: 0x00): A: 3a B: 7f C: 7f D: 7f
+PC: 15 (Flags: 0x00): A: 3a B: 7f C: 7f D: 7f
+HALT PC: 0x10, A: 0x3a, B: 0x7f, C: 0x7f, D: 0x7f
