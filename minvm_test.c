@@ -105,22 +105,9 @@ void inc (byte *registers[], byte operandRegisterMask) {
 }
 
 void dec (byte *registers[], byte operandRegisterMask) {
-    int i;
-    unsigned long temp = 0; // Relevent registers will be copied here, using a 32 bit unsigned integer to handle underflow
-    //printf("DEC\n");
-    for (i = NUM_REGISTERS - 1; i >= 0; --i) { // Start with register D, since it should be the most significant byte
-        if (operandRegisterMask & registerMasks[i]) {
-            temp = temp << WORD_SIZE; // Make room for the next value (has no effect if temp is still 0)
-            temp = temp | *registers[i]; // Put value of the register at the end of temp
-        }
-    }
+    unsigned long temp = getLongFromRegisters(registers, operandRegisterMask);
     --temp;
-    for (i = 0; i < NUM_REGISTERS; ++i) { // Start putting temp back into registers, starting with register A
-        if (operandRegisterMask & registerMasks[i]) {
-            *registers[i] = (byte)temp; // Stores the least significant byte into the register
-            temp = temp >> WORD_SIZE; // Shift values in temp to prepare for next iteration
-        }
-    }
+    storeLongResultInRegisters(temp, registers, operandRegisterMask);
 }
 
 void loadr (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
