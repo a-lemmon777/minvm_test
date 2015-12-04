@@ -30,7 +30,8 @@ void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask);
 void stor (virtual_machine_t *vm, byte *registers[], byte sourceRegisterMask);
 void itr (virtual_machine_t *vm, byte interruptFunctionIndex);
 bool isValidSourceRegisterMask (byte sourceRegisterMask, byte numRequiredRegisters);
-void getOperandsAsLongs (unsigned long operandArray[], byte *registers[], byte sourceRegisterMask);
+void getOperands (byte operands[], byte *registers[], byte sourceRegisterMask);
+void storeLongResultInRegisters (unsigned long result, byte *registers[], byte destinationRegisterMask, byte countOfDestinationRegisters);
 
 // Implement your VM here
 void vm_exec (virtual_machine_t *vm) {
@@ -166,11 +167,9 @@ void loadr (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMa
 }
 
 void add (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
-    int index;
-    int registersDone;
     byte sourceRegisterMask = vm->code[vm->pc++];
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
-    unsigned long operands[2]; // Storing the operands as 32 bit unsigned integers to handle overflow
+    byte operands[2]; // Storing the operands as 32 bit unsigned integers to handle overflow
     unsigned long result;
     printf("ADD\n");
 
@@ -179,18 +178,9 @@ void add (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
         return;
     }
 
-    getOperandsAsLongs(operands, registers, sourceRegisterMask);
-    result = operands[0] + operands[1];
-    index = 0;
-    registersDone = 0;
-    while (registersDone < countOfDestinationRegisters) { // Copy from result to destination registers
-        if (destinationRegisterMask & registerMasks[index]) {
-            *registers[index] = (byte)result; // Stores the least significant byte into the register
-            result = result >> WORD_SIZE; // Shift values in result to prepare for next iteration
-            ++registersDone;
-        }
-        ++index;
-    }
+    getOperands(operands, registers, sourceRegisterMask); // Copy operands from the registers to the operands array
+    result = (unsigned long)operands[0] + (unsigned long)operands[1];
+    storeLongResultInRegisters(result, registers, destinationRegisterMask, countOfDestinationRegisters); // Store the result back to the destination registers
 }
 
 void sub (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
@@ -276,14 +266,29 @@ bool isValidSourceRegisterMask (byte sourceRegisterMask, byte numRequiredRegiste
     return bitCountLookup[sourceRegisterMask] == numRequiredRegisters; // Valid if the mask has exactly the required registers
 }
 
-void getOperandsAsLongs (unsigned long operandArray[], byte *registers[], byte sourceRegisterMask) {
+// Copies the values of the registers specified in sourceRegisterMask to the operands array
+void getOperands (byte operands[], byte *registers[], byte sourceRegisterMask) {
     byte countOfSourceRegisters = bitCountLookup[sourceRegisterMask];
     int index = 0;
     int registersdone = 0;
-    while (registersdone < countOfSourceRegisters) { // copy to operands array
+    while (registersdone < countOfSourceRegisters) { // Copy to operands array
         if (sourceRegisterMask & registerMasks[index]) {
-            operandArray[registersdone] = *registers[index];
+            operands[registersdone] = *registers[index];
             ++registersdone;
+        }
+        ++index;
+    }
+}
+
+// Breaks the long result back into 8 byte pieces and stores them in the registers specified in destinationRegisterMask
+void storeLongResultInRegisters (unsigned long result, byte *registers[], byte destinationRegisterMask, byte countOfDestinationRegisters) {
+    int index = 0;
+    int registersDone = 0;
+    while (registersDone < countOfDestinationRegisters) { // Copy from result to destination registers
+        if (destinationRegisterMask & registerMasks[index]) {
+            *registers[index] = (byte)result; // Stores the least significant byte into the register
+            result = result >> WORD_SIZE; // Shift values in result to prepare for next iteration
+            ++registersDone;
         }
         ++index;
     }
