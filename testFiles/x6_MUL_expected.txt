@@ -2,4 +2,4 @@ PC: 6 (Flags: 0x00): A: ff B: ff C: 03 D: 04
 PC: 9 (Flags: 0x00): A: ff B: 01 C: fe D: 00
 PC: 12 (Flags: 0x00): A: ff B: 01 C: fe D: 02
 PC: 15 (Flags: 0x00): A: ff B: 01 C: fe D: 02
-HALT PC: 0x16, A: 0xff, B: 0x01, C: 0xfe, D: 0x02
+HALT PC: 0x10, A: 0xff, B: 0x01, C: 0xfe, D: 0x02

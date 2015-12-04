@@ -201,10 +201,20 @@ void sub (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
 }
 
 void mul (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
+    byte sourceRegisterMask = vm->code[vm->pc++];
+    byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
+    byte operands[2]; // Storing the operands as 32 bit unsigned integers to handle overflow
+    unsigned long result;
     printf("MUL\n");
-    UNREF(vm);
-    UNREF(registers);
-    UNREF(destinationRegisterMask);
+
+    if (!isValidSourceRegisterMask(sourceRegisterMask, 2)) { // The count of source registers must equal 2
+        vm->flags = MINVM_EXCEPTION | MINVM_HALT;
+        return;
+    }
+
+    getOperands(operands, registers, sourceRegisterMask); // Copy operands from the registers to the operands array
+    result = (unsigned long)operands[0] * (unsigned long)operands[1];
+    storeLongResultInRegisters(result, registers, destinationRegisterMask, countOfDestinationRegisters); // Store the result back to the destination registers
 }
 
 void div (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
