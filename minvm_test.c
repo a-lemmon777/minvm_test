@@ -29,6 +29,7 @@ void jmpneq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask)
 void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask);
 void stor (virtual_machine_t *vm, byte *registers[], byte sourceRegisterMask);
 void itr (virtual_machine_t *vm, byte interruptFunctionIndex);
+unsigned long getLongFromRegisters(byte *registers[], byte operandRegisterMask);
 bool isValidSourceRegisterMask (byte sourceRegisterMask, byte numRequiredRegisters);
 void getOperands (byte operands[], byte *registers[], byte sourceRegisterMask);
 void storeLongResultInRegisters (unsigned long result, byte *registers[], byte destinationRegisterMask, byte countOfDestinationRegisters);
@@ -36,6 +37,11 @@ void storeByteInEachRegister (byte result, byte *registers[], byte destinationRe
 
 // Implement your VM here
 void vm_exec (virtual_machine_t *vm) {
+    //byte thing = 0xbb;
+    //unsigned long stuff = 0;
+    //stuff = thing << 16;
+    //printf("%8lx\n", stuff);
+    //return;
     byte *registers[NUM_REGISTERS]; // Used to loop over the registers, making the code less verbose
     registers[0] = &(vm->a); // Unfortunately, cl.exe won't let me inline these
     registers[1] = &(vm->b);
@@ -84,7 +90,7 @@ void vm_exec (virtual_machine_t *vm) {
 
 void loadi (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
     int i;
-    printf("LOADI\n");
+    //printf("LOADI\n");
     if (destinationRegisterMask == 0x00) { // This code halts the virtual machine
         vm->flags = MINVM_HALT;
         return;
@@ -97,28 +103,16 @@ void loadi (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMa
 }
 
 void inc (byte *registers[], byte operandRegisterMask) {
-    int i;
-    unsigned long temp = 0; // Relevent registers will be copied here, using a 32 bit unsigned integer to handle overflow
-    printf("INC\n");
-    for (i = NUM_REGISTERS - 1; i >= 0; --i) { // Start with register D, since it should be the most significant byte
-        if (operandRegisterMask & registerMasks[i]) {
-            temp = temp << WORD_SIZE; // Make room for the next value (has no effect if temp is still 0)
-            temp = temp | *registers[i]; // Put value of the register at the end of temp
-        }
-    }
+    unsigned long temp = getLongFromRegisters(registers, operandRegisterMask);
+    byte countOfDestinationRegisters = bitCountLookup[operandRegisterMask];
     ++temp;
-    for (i = 0; i < NUM_REGISTERS; ++i) { // Start putting temp back into registers, starting with register A
-        if (operandRegisterMask & registerMasks[i]) {
-            *registers[i] = (byte)temp; // Stores the least significant byte into the register
-            temp = temp >> WORD_SIZE; // Shift values in temp to prepare for next iteration
-        }
-    }
+    storeLongResultInRegisters(temp, registers, operandRegisterMask, countOfDestinationRegisters);
 }
 
 void dec (byte *registers[], byte operandRegisterMask) {
     int i;
     unsigned long temp = 0; // Relevent registers will be copied here, using a 32 bit unsigned integer to handle underflow
-    printf("DEC\n");
+    //printf("DEC\n");
     for (i = NUM_REGISTERS - 1; i >= 0; --i) { // Start with register D, since it should be the most significant byte
         if (operandRegisterMask & registerMasks[i]) {
             temp = temp << WORD_SIZE; // Make room for the next value (has no effect if temp is still 0)
@@ -140,7 +134,7 @@ void loadr (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMa
     byte sourceRegisterMask = vm->code[vm->pc++];
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     byte temp[NUM_REGISTERS]; // Bytes read from code locations referenced from the source registers will be stored here temporarily
-    printf("LOADR\n");
+    //printf("LOADR\n");
 
     if (!isValidSourceRegisterMask(sourceRegisterMask, countOfDestinationRegisters)) { // The count of source registers must equal the count of destination registers
         vm->flags = MINVM_EXCEPTION | MINVM_HALT;
@@ -172,7 +166,7 @@ void add (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     byte operands[2]; // Storing the operands as 32 bit unsigned integers to handle overflow
     unsigned long result;
-    printf("ADD\n");
+    //printf("ADD\n");
 
     if (!isValidSourceRegisterMask(sourceRegisterMask, 2)) { // The count of source registers must equal 2
         vm->flags = MINVM_EXCEPTION | MINVM_HALT;
@@ -189,7 +183,7 @@ void sub (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     byte operands[2]; // Storing the operands as 32 bit unsigned integers to handle underflow
     unsigned long result;
-    printf("SUB\n");
+    //printf("SUB\n");
 
     if (!isValidSourceRegisterMask(sourceRegisterMask, 2)) { // The count of source registers must equal 2
         vm->flags = MINVM_EXCEPTION | MINVM_HALT;
@@ -206,7 +200,7 @@ void mul (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     byte operands[2]; // Storing the operands as 32 bit unsigned integers to handle overflow
     unsigned long result;
-    printf("MUL\n");
+    //printf("MUL\n");
 
     if (!isValidSourceRegisterMask(sourceRegisterMask, 2)) { // The count of source registers must equal 2
         vm->flags = MINVM_EXCEPTION | MINVM_HALT;
@@ -223,7 +217,7 @@ void div (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     byte operands[2]; // Storing the operands as 32 bit unsigned integers
     unsigned long result;
-    printf("DIV\n");
+    //printf("DIV\n");
 
     if (!isValidSourceRegisterMask(sourceRegisterMask, 2)) { // The count of source registers must equal 2
         vm->flags = MINVM_EXCEPTION | MINVM_HALT;
@@ -233,7 +227,7 @@ void div (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
     getOperands(operands, registers, sourceRegisterMask); // Copy operands from the registers to the operands array
 
     if (operands[1] == 0x00) { // Cannot divide by zero
-        printf("DIV BY ZERO\n");
+        //printf("DIV BY ZERO\n");
         vm->flags = MINVM_EXCEPTION | MINVM_HALT;
         return;
     }
@@ -247,7 +241,7 @@ void and (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     byte operands[2]; // Storing the operands as a pair of bytes
     byte result;
-    printf("AND\n");
+    //printf("AND\n");
 
     if (!isValidSourceRegisterMask(sourceRegisterMask, 2)) { // The count of source registers must equal 2
         vm->flags = MINVM_EXCEPTION | MINVM_HALT;
@@ -264,7 +258,7 @@ void or (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask)
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     byte operands[2]; // Storing the operands as a pair of bytes
     byte result;
-    printf("OR\n");
+    //printf("OR\n");
 
     if (!isValidSourceRegisterMask(sourceRegisterMask, 2)) { // The count of source registers must equal 2
         vm->flags = MINVM_EXCEPTION | MINVM_HALT;
@@ -281,7 +275,7 @@ void xor (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     byte operands[2]; // Storing the operands as a pair of bytes
     byte result;
-    printf("XOR\n");
+    //printf("XOR\n");
 
     if (!isValidSourceRegisterMask(sourceRegisterMask, 2)) { // The count of source registers must equal 2
         vm->flags = MINVM_EXCEPTION | MINVM_HALT;
@@ -299,7 +293,7 @@ void rotr (byte *registers[], byte operandRegisterMask) {
     int index = 0;
     int registersDone = 0;
     int currentTempIndex = countOfDestinationRegisters - 1; // Start with the last register
-    printf("ROTR\n");
+    //printf("ROTR\n");
 
     getOperands(temp, registers, operandRegisterMask); // Copy values of relevant registers to temp array
 
@@ -319,10 +313,10 @@ void jmpneq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask)
     byte operands[NUM_REGISTERS]; // Storage for relevant registers
     int index = 0;
     int i;
-    printf("JMPNEQ\n");
+    //printf("JMPNEQ\n");
     if (operandRegisterMask == 0x00) { // This code signals an unconditional jump
-        printf("unconditional\n");
-        printf("%02x\n", jumpLocation);
+        //printf("unconditional\n");
+        //printf("%02x\n", jumpLocation);
         vm->pc = jumpLocation;
         return;
     }
@@ -338,22 +332,22 @@ void jmpneq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask)
                 index = 3; break;
         }
         if (*registers[index] != 0x00) {
-            printf("singleGo\n");
-            printf("%02x\n", jumpLocation);
+            //printf("singleGo\n");
+            //printf("%02x\n", jumpLocation);
             vm->pc = jumpLocation;
         }
-        printf("singleStay\n");
+        //printf("singleStay\n");
         return;
     }
     getOperands(operands, registers, operandRegisterMask); // Copy values of relevant registers to operands array
     for (i = 1; i < countOfOperandRegisters; ++i) {
         if (operands[0] != operands[i]) { // Found different values
-            printf("different\n");
+            //printf("different\n");
             vm->pc = jumpLocation;
         }
     }
     // If we get here, no jump
-    printf("no jump");
+   // printf("no jump");
 }
 
 void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask) {
@@ -362,10 +356,10 @@ void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask) 
     byte operands[NUM_REGISTERS]; // Storage for relevant registers
     int index = 0;
     int i;
-    printf("JMPEQ\n");
+    //printf("JMPEQ\n");
     if (operandRegisterMask == 0x00) { // This code signals an unconditional jump
-        printf("unconditional\n");
-        printf("%02x\n", jumpLocation);
+        //printf("unconditional\n");
+        //printf("%02x\n", jumpLocation);
         vm->pc = jumpLocation;
         return;
     }
@@ -381,9 +375,9 @@ void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask) 
             index = 3; break;
         }
         if (*registers[index] == 0x00) {
-            printf("singleGo\n");
-            printf("%02x\n", index);
-            printf("%02x\n", jumpLocation);
+            //printf("singleGo\n");
+            //printf("%02x\n", index);
+            //printf("%02x\n", jumpLocation);
             vm->pc = jumpLocation;
         }
         printf("singleStay\n");
@@ -392,14 +386,14 @@ void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask) 
     getOperands(operands, registers, operandRegisterMask); // Copy values of relevant registers to operands array
     for (i = 1; i < countOfOperandRegisters; ++i) {
         if (operands[0] != operands[i]) { // Found different values
-            printf("different\n");
-            printf("no jump\n");
+            //printf("different\n");
+            //printf("no jump\n");
             return;
         }
     }
     // If we get here, all relevant registers were equal, so jump
     vm->pc = jumpLocation;
-    printf("all equal, jump\n");
+    //printf("all equal, jump\n");
 }
 
 void stor (virtual_machine_t *vm, byte *registers[], byte sourceRegisterMask) {
@@ -407,7 +401,7 @@ void stor (virtual_machine_t *vm, byte *registers[], byte sourceRegisterMask) {
     byte countOfOperandRegisters = bitCountLookup[sourceRegisterMask];
     byte valuesToStore[NUM_REGISTERS]; // Relevant register values are temporarily stored here
     int i;
-    printf("STOR\n");
+    //printf("STOR\n");
 
     getOperands(valuesToStore, registers, sourceRegisterMask); // Copy values of relevant registers to valuesToStore
     
@@ -418,14 +412,27 @@ void stor (virtual_machine_t *vm, byte *registers[], byte sourceRegisterMask) {
 }
 
 void itr (virtual_machine_t *vm, byte interruptFunctionIndex) {
-    printf("ITR\n");
+    //printf("ITR\n");
     (vm->interrupts[interruptFunctionIndex])(vm); // Calls the interrupt function specified by the index
+}
+
+// Concatenates values in the specified registers into a single unsigned long
+unsigned long getLongFromRegisters(byte *registers[], byte operandRegisterMask) {
+    int i;
+    unsigned long temp = 0; // Relevent registers will be copied here, using a 32 bit unsigned integer to handle overflow
+    for (i = NUM_REGISTERS - 1; i >= 0; --i) { // Start with register D, since it should be the most significant byte
+        if (operandRegisterMask & registerMasks[i]) {
+            temp = temp << WORD_SIZE; // Make room for the next value (has no effect if temp is still 0)
+            temp = temp | *registers[i]; // Put value of the register at the end of temp
+        }
+    }
+    return temp;
 }
 
 // Checks that a mask has a 0 in the upper byte and encodes a number of registers exactly equal to numRequiredRegisters
 bool isValidSourceRegisterMask (byte sourceRegisterMask, byte numRequiredRegisters) {
     if (sourceRegisterMask & 0xF0) { // Invalid if the upper byte is not 0
-        printf("NOT 0V\n");
+        //printf("NOT 0V\n");
         return false;
     }
     return bitCountLookup[sourceRegisterMask] == numRequiredRegisters; // Valid if the mask has exactly the required registers
