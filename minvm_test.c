@@ -218,10 +218,27 @@ void mul (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
 }
 
 void div (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
+    byte sourceRegisterMask = vm->code[vm->pc++];
+    byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
+    byte operands[2]; // Storing the operands as 32 bit unsigned integers
+    unsigned long result;
     printf("DIV\n");
-    UNREF(vm);
-    UNREF(registers);
-    UNREF(destinationRegisterMask);
+
+    if (!isValidSourceRegisterMask(sourceRegisterMask, 2)) { // The count of source registers must equal 2
+        vm->flags = MINVM_EXCEPTION | MINVM_HALT;
+        return;
+    }
+
+    getOperands(operands, registers, sourceRegisterMask); // Copy operands from the registers to the operands array
+
+    if (operands[1] == 0x00) { // Cannot divide by zero
+        printf("DIV BY ZERO\n");
+        vm->flags = MINVM_EXCEPTION | MINVM_HALT;
+        return;
+    }
+
+    result = (unsigned long)operands[0] / (unsigned long)operands[1];
+    storeLongResultInRegisters(result, registers, destinationRegisterMask, countOfDestinationRegisters); // Store the result back to the destination registers
 }
 
 void and (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
