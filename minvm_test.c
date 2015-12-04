@@ -277,10 +277,20 @@ void or (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask)
 }
 
 void xor (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
-    printf("XOR\n");
-    UNREF(vm);
-    UNREF(registers);
-    UNREF(destinationRegisterMask);
+    byte sourceRegisterMask = vm->code[vm->pc++];
+    byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
+    byte operands[2]; // Storing the operands as a pair of bytes
+    byte result;
+    printf("OR\n");
+
+    if (!isValidSourceRegisterMask(sourceRegisterMask, 2)) { // The count of source registers must equal 2
+        vm->flags = MINVM_EXCEPTION | MINVM_HALT;
+        return;
+    }
+
+    getOperands(operands, registers, sourceRegisterMask); // Copy operands from the registers to the operands array
+    result = operands[0] ^ operands[1];
+    storeByteInEachRegister(result, registers, destinationRegisterMask, countOfDestinationRegisters);
 }
 
 void rotr (byte *registers[], byte operandRegisterMask) {
