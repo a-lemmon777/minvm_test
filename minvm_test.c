@@ -38,11 +38,6 @@ void storeByteInEachRegister (byte result, byte *registers[], byte destinationRe
 
 // Implement your VM here
 void vm_exec (virtual_machine_t *vm) {
-    //byte thing = 0xbb;
-    //unsigned long stuff = 0;
-    //stuff = thing << 16;
-    //printf("%8lx\n", stuff);
-    //return;
     byte *registers[NUM_REGISTERS]; // Used to loop over the registers, making the code less verbose
     registers[0] = &(vm->a); // Unfortunately, cl.exe won't let me inline these
     registers[1] = &(vm->b);
@@ -90,15 +85,16 @@ void vm_exec (virtual_machine_t *vm) {
 }
 
 void loadi (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
-    int i;
+    byte *destinationRegisters[NUM_REGISTERS];
+    byte count;
+    byte index;
     if (destinationRegisterMask == 0x00) { // This code halts the virtual machine
         vm->flags = MINVM_HALT;
         return;
     }
-    for (i = 0; i < NUM_REGISTERS; ++i) {
-        if (destinationRegisterMask & registerMasks[i]) {
-            *registers[i] = vm->code[vm->pc++]; // Write the byte to the ith register
-        }
+    count = getRelevantRegisters(destinationRegisters, registers, destinationRegisterMask);
+    for (index = 0; index < count; ++index) {
+        *destinationRegisters[index] = vm->code[vm->pc++]; // Write to the destination registers
     }
 }
 
