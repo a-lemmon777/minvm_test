@@ -33,7 +33,7 @@ unsigned long getLongFromRegisters(byte *registers[], byte operandRegisterMask);
 bool isValidSourceRegisterMask (byte sourceRegisterMask, byte numRequiredRegisters);
 byte getRelevantRegisters (byte *relevantRegisters[], byte *allRegisters[], byte registerMask);
 void getOperands (byte operands[], byte *registers[], byte sourceRegisterMask);
-void storeLongResultInRegisters (unsigned long result, byte *registers[], byte destinationRegisterMask, byte countOfDestinationRegisters);
+void storeLongResultInRegisters (unsigned long result, byte *registers[], byte destinationRegisterMask);
 void storeByteInEachRegister (byte result, byte *registers[], byte destinationRegisterMask, byte countOfDestinationRegisters);
 
 // Implement your VM here
@@ -100,9 +100,8 @@ void loadi (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMa
 
 void inc (byte *registers[], byte operandRegisterMask) {
     unsigned long temp = getLongFromRegisters(registers, operandRegisterMask);
-    byte countOfDestinationRegisters = bitCountLookup[operandRegisterMask];
     ++temp;
-    storeLongResultInRegisters(temp, registers, operandRegisterMask, countOfDestinationRegisters);
+    storeLongResultInRegisters(temp, registers, operandRegisterMask);
 }
 
 void dec (byte *registers[], byte operandRegisterMask) {
@@ -159,7 +158,6 @@ void loadr (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMa
 
 void add (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
     byte sourceRegisterMask = vm->code[vm->pc++];
-    byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     byte operands[2]; // Storing the operands as 32 bit unsigned integers to handle overflow
     unsigned long result;
     //printf("ADD\n");
@@ -171,12 +169,11 @@ void add (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
 
     getOperands(operands, registers, sourceRegisterMask); // Copy operands from the registers to the operands array
     result = (unsigned long)operands[0] + (unsigned long)operands[1];
-    storeLongResultInRegisters(result, registers, destinationRegisterMask, countOfDestinationRegisters); // Store the result back to the destination registers
+    storeLongResultInRegisters(result, registers, destinationRegisterMask); // Store the result back to the destination registers
 }
 
 void sub (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
     byte sourceRegisterMask = vm->code[vm->pc++];
-    byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     byte operands[2]; // Storing the operands as 32 bit unsigned integers to handle underflow
     unsigned long result;
     //printf("SUB\n");
@@ -188,12 +185,11 @@ void sub (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
 
     getOperands(operands, registers, sourceRegisterMask); // Copy operands from the registers to the operands array
     result = (unsigned long)operands[0] - (unsigned long)operands[1];
-    storeLongResultInRegisters(result, registers, destinationRegisterMask, countOfDestinationRegisters); // Store the result back to the destination registers
+    storeLongResultInRegisters(result, registers, destinationRegisterMask); // Store the result back to the destination registers
 }
 
 void mul (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
     byte sourceRegisterMask = vm->code[vm->pc++];
-    byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     byte operands[2]; // Storing the operands as 32 bit unsigned integers to handle overflow
     unsigned long result;
     //printf("MUL\n");
@@ -205,12 +201,11 @@ void mul (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
 
     getOperands(operands, registers, sourceRegisterMask); // Copy operands from the registers to the operands array
     result = (unsigned long)operands[0] * (unsigned long)operands[1];
-    storeLongResultInRegisters(result, registers, destinationRegisterMask, countOfDestinationRegisters); // Store the result back to the destination registers
+    storeLongResultInRegisters(result, registers, destinationRegisterMask); // Store the result back to the destination registers
 }
 
 void div (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
     byte sourceRegisterMask = vm->code[vm->pc++];
-    byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     byte operands[2]; // Storing the operands as 32 bit unsigned integers
     unsigned long result;
     //printf("DIV\n");
@@ -229,7 +224,7 @@ void div (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
     }
 
     result = (unsigned long)operands[0] / (unsigned long)operands[1];
-    storeLongResultInRegisters(result, registers, destinationRegisterMask, countOfDestinationRegisters); // Store the result back to the destination registers
+    storeLongResultInRegisters(result, registers, destinationRegisterMask); // Store the result back to the destination registers
 }
 
 void and (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
@@ -328,11 +323,8 @@ void jmpneq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask)
                 index = 3; break;
         }
         if (*registers[index] != 0x00) {
-            //printf("singleGo\n");
-            //printf("%02x\n", jumpLocation);
             vm->pc = jumpLocation;
         }
-        //printf("singleStay\n");
         return;
     }
     getOperands(operands, registers, operandRegisterMask); // Copy values of relevant registers to operands array
@@ -371,12 +363,8 @@ void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask) 
             index = 3; break;
         }
         if (*registers[index] == 0x00) {
-            //printf("singleGo\n");
-            //printf("%02x\n", index);
-            //printf("%02x\n", jumpLocation);
             vm->pc = jumpLocation;
         }
-        printf("singleStay\n");
         return;
     }
     getOperands(operands, registers, operandRegisterMask); // Copy values of relevant registers to operands array
@@ -463,16 +451,13 @@ void getOperands (byte operands[], byte *registers[], byte sourceRegisterMask) {
 }
 
 // Breaks the long result back into 8 byte pieces and stores them in the registers specified in destinationRegisterMask
-void storeLongResultInRegisters (unsigned long result, byte *registers[], byte destinationRegisterMask, byte countOfDestinationRegisters) {
-    int index = 0;
-    int registersDone = 0;
-    while (registersDone < countOfDestinationRegisters) { // Copy from result to destination registers
-        if (destinationRegisterMask & registerMasks[index]) {
-            *registers[index] = (byte)result; // Stores the least significant byte into the register
-            result = result >> WORD_SIZE; // Shift values in result to prepare for next iteration
-            ++registersDone;
-        }
-        ++index;
+void storeLongResultInRegisters (unsigned long result, byte *registers[], byte destinationRegisterMask) {
+    byte *destinationRegisters[NUM_REGISTERS];
+    byte count = getRelevantRegisters(destinationRegisters, registers, destinationRegisterMask);
+    byte index;
+    for (index = 0; index < count; ++index) {
+        *destinationRegisters[index] = (byte)result; // Stores the least significant byte into the register
+        result = result >> WORD_SIZE; // Shift values in result to prepare for next iteration
     }
 }
 
