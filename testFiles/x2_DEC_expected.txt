@@ -1,4 +1,5 @@
 PC: 6 (Flags: 0x00): A: 00 B: 00 C: 00 D: 00
 PC: 8 (Flags: 0x00): A: ff B: ff C: ff D: 00
 PC: 10 (Flags: 0x00): A: ff B: fe C: ff D: 00
-HALT PC: 0x0b, A: 0xff, B: 0xfe, C: 0xff, D: 0x00
+PC: 12 (Flags: 0x00): A: ff B: fe C: ff D: 00
+HALT PC: 0x0d, A: 0xff, B: 0xfe, C: 0xff, D: 0x00

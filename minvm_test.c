@@ -175,7 +175,7 @@ void add (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
         }
         ++index;
     }
-    unsigned long result = operands[1] + operands[0];
+    unsigned long result = operands[0] + operands[1];
     index = 0;
     registersDone = 0;
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
