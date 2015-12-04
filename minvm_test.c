@@ -33,7 +33,7 @@ bool isValidSourceRegisterMask (byte sourceRegisterMask, byte numRequiredRegiste
 byte getRelevantRegisters (byte *relevantRegisters[], byte *allRegisters[], byte registerMask);
 void getOperands (byte operands[], byte *registers[], byte sourceRegisterMask);
 void storeLongResultInRegisters (unsigned long result, byte *registers[], byte destinationRegisterMask);
-void storeByteInEachRegister (byte result, byte *registers[], byte destinationRegisterMask, byte countOfDestinationRegisters);
+void storeByteInEachRegister (byte result, byte *registers[], byte destinationRegisterMask);
 
 // Implement your VM here
 void vm_exec (virtual_machine_t *vm) {
@@ -202,8 +202,7 @@ void div (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
 
 void and (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
     byte sourceRegisterMask = vm->code[vm->pc++];
-    byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
-    byte operands[2]; // Storing the operands as a pair of bytes
+    byte *operands[NUM_REGISTERS];
     byte result;
 
     if (!isValidSourceRegisterMask(sourceRegisterMask, 2)) { // The count of source registers must equal 2
@@ -211,14 +210,13 @@ void and (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
         return;
     }
 
-    getOperands(operands, registers, sourceRegisterMask); // Copy operands from the registers to the operands array
-    result = operands[0] & operands[1];
-    storeByteInEachRegister(result, registers, destinationRegisterMask, countOfDestinationRegisters);
+    getRelevantRegisters(operands, registers, sourceRegisterMask); // Gets the two source registers
+    result = *operands[0] & *operands[1];
+    storeByteInEachRegister(result, registers, destinationRegisterMask);
 }
 
 void or (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
     byte sourceRegisterMask = vm->code[vm->pc++];
-    byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     byte operands[2]; // Storing the operands as a pair of bytes
     byte result;
 
@@ -229,12 +227,11 @@ void or (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask)
 
     getOperands(operands, registers, sourceRegisterMask); // Copy operands from the registers to the operands array
     result = operands[0] | operands[1];
-    storeByteInEachRegister(result, registers, destinationRegisterMask, countOfDestinationRegisters);
+    storeByteInEachRegister(result, registers, destinationRegisterMask);
 }
 
 void xor (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
     byte sourceRegisterMask = vm->code[vm->pc++];
-    byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     byte operands[2]; // Storing the operands as a pair of bytes
     byte result;
 
@@ -245,7 +242,7 @@ void xor (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
 
     getOperands(operands, registers, sourceRegisterMask); // Copy operands from the registers to the operands array
     result = operands[0] ^ operands[1];
-    storeByteInEachRegister(result, registers, destinationRegisterMask, countOfDestinationRegisters);
+    storeByteInEachRegister(result, registers, destinationRegisterMask);
 }
 
 void rotr (byte *registers[], byte operandRegisterMask) {
@@ -418,14 +415,11 @@ void storeLongResultInRegisters (unsigned long result, byte *registers[], byte d
 }
 
 // Stores the result byte into each register specified in destinationRegisterMask
-void storeByteInEachRegister (byte result, byte *registers[], byte destinationRegisterMask, byte countOfDestinationRegisters) {
-    int index = 0;
-    int registersDone = 0;
-    while (registersDone < countOfDestinationRegisters) { // Copy from result to destination registers
-        if (destinationRegisterMask & registerMasks[index]) {
-            *registers[index] = result; // Stores the byte into the register
-            ++registersDone;
-        }
-        ++index;
+void storeByteInEachRegister (byte result, byte *registers[], byte destinationRegisterMask) {
+    byte *destinationRegisters[NUM_REGISTERS];
+    byte count = getRelevantRegisters(destinationRegisters, registers, destinationRegisterMask);
+    byte index;
+    for (index = 0; index < count; ++index) {
+        *destinationRegisters[index] = result; // Stores the byte into the register
     }
 }
