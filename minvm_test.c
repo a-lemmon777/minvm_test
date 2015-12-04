@@ -29,6 +29,7 @@ void jmpneq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask)
 void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask);
 void stor (virtual_machine_t *vm, byte *registers[], byte sourceRegisterMask);
 void itr (virtual_machine_t *vm, byte interruptFunctionIndex);
+bool isValidSourceRegisterMask (byte sourceRegisterMask, byte numRequiredRegisters);
 
 // Implement your VM here
 void vm_exec (virtual_machine_t *vm) {
@@ -135,24 +136,17 @@ void loadr (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMa
     int registersDone;
     byte sourceRegisterMask = vm->code[vm->pc++];
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
-    byte countOfSourceRegisters;
-    byte temp[NUM_REGISTERS]; // bytes read from code locations referenced from the source registers will be stored here temporarily
+    byte temp[NUM_REGISTERS]; // Bytes read from code locations referenced from the source registers will be stored here temporarily
     printf("LOADR\n");
 
-    if (sourceRegisterMask & 0xF0) { // The upper byte of the sourceRegisterMask must be 0
-        vm->flags = MINVM_EXCEPTION | MINVM_HALT;
-        return;
-    }
-    
-    countOfSourceRegisters = bitCountLookup[sourceRegisterMask];
-    if (countOfDestinationRegisters != countOfSourceRegisters) { // The number of source and destination registers must match to continue
+    if (!isValidSourceRegisterMask(sourceRegisterMask, countOfDestinationRegisters)) { // The count of source registers must equal the count of destination registers
         vm->flags = MINVM_EXCEPTION | MINVM_HALT;
         return;
     }
 
     index = 0;
     registersDone = 0;
-    while (registersDone < countOfSourceRegisters) { // Copy to temp
+    while (registersDone < countOfDestinationRegisters) { // Copy to temp
         if (sourceRegisterMask & registerMasks[index]) {
             temp[registersDone] = vm->code[*registers[index]];
             ++registersDone;
@@ -174,22 +168,16 @@ void add (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
     int index;
     int registersDone;
     byte sourceRegisterMask = vm->code[vm->pc++];
-    byte countOfSourceRegisters;
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
-    unsigned long operands[2]; // storing the operands as 32 bit unsigned integers to handle overflow
+    unsigned long operands[2]; // Storing the operands as 32 bit unsigned integers to handle overflow
     unsigned long result;
     printf("ADD\n");
 
-    if (sourceRegisterMask & 0xF0) { // The upper byte of the sourceRegisterMask must be 0
+    if (!isValidSourceRegisterMask(sourceRegisterMask, 2)) { // The count of source registers must equal 2
         vm->flags = MINVM_EXCEPTION | MINVM_HALT;
         return;
     }
 
-    countOfSourceRegisters = bitCountLookup[sourceRegisterMask];
-    if (countOfSourceRegisters != 2) { // The number of source registers must equal 2
-        vm->flags = MINVM_EXCEPTION | MINVM_HALT;
-        return;
-    }
     index = 0;
     registersDone = 0;
     while (registersDone < 2) { // Copy to operands array
@@ -284,4 +272,13 @@ void stor (virtual_machine_t *vm, byte *registers[], byte sourceRegisterMask) {
 void itr (virtual_machine_t *vm, byte interruptFunctionIndex) {
     printf("ITR\n");
     (vm->interrupts[interruptFunctionIndex])(vm); // Calls the interrupt function specified by the index
+}
+
+// Checks that a mask has a 0 in the upper byte and encodes a number of registers exactly equal to numRequiredRegisters
+bool isValidSourceRegisterMask (byte sourceRegisterMask, byte numRequiredRegisters) {
+    if (sourceRegisterMask & 0xF0) { // Invalid if the upper byte is not 0
+        printf("NOT 0V\n");
+        return false;
+    }
+    return bitCountLookup[sourceRegisterMask] == numRequiredRegisters; // Valid if the mask has exactly the required registers
 }
