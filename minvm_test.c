@@ -33,7 +33,7 @@ void itr (virtual_machine_t *vm, byte interruptFunctionIndex);
 // Implement your VM here
 void vm_exec (virtual_machine_t *vm) {
     byte *registers[NUM_REGISTERS]; // Used to loop over the registers, making the code less verbose
-    registers[0] = &(vm->a); // Unfortunately, ANSI won't let me inline these
+    registers[0] = &(vm->a); // Unfortunately, cl.exe won't let me inline these
     registers[1] = &(vm->b);
     registers[2] = &(vm->c);
     registers[3] = &(vm->d);
@@ -79,12 +79,13 @@ void vm_exec (virtual_machine_t *vm) {
 }
 
 void loadi (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
+    int i;
     printf("LOADI\n");
     if (destinationRegisterMask == 0x00) { // This code halts the virtual machine
         vm->flags = MINVM_HALT;
         return;
     }
-    for (int i = 0; i < NUM_REGISTERS; ++i) {
+    for (i = 0; i < NUM_REGISTERS; ++i) {
         if (destinationRegisterMask & registerMasks[i]) {
             *registers[i] = vm->code[vm->pc++]; // Write the byte to the ith register
         }
@@ -92,16 +93,17 @@ void loadi (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMa
 }
 
 void inc (byte *registers[], byte operandRegisterMask) {
-    printf("INC\n");
+    int i;
     unsigned long temp = 0; // Relevent registers will be copied here, using a 32 bit unsigned integer to handle overflow
-    for (int i = NUM_REGISTERS - 1; i >= 0; --i) { // Start with register D, since it should be the most significant byte
+    printf("INC\n");
+    for (i = NUM_REGISTERS - 1; i >= 0; --i) { // Start with register D, since it should be the most significant byte
         if (operandRegisterMask & registerMasks[i]) {
             temp = temp << WORD_SIZE; // Make room for the next value (has no effect if temp is still 0)
             temp = temp | *registers[i]; // Put value of the register at the end of temp
         }
     }
     ++temp;
-    for (int i = 0; i < NUM_REGISTERS; ++i) { // Start putting temp back into registers, starting with register A
+    for (i = 0; i < NUM_REGISTERS; ++i) { // Start putting temp back into registers, starting with register A
         if (operandRegisterMask & registerMasks[i]) {
             *registers[i] = (byte)temp; // Stores the least significant byte into the register
             temp = temp >> WORD_SIZE; // Shift values in temp to prepare for next iteration
@@ -110,16 +112,17 @@ void inc (byte *registers[], byte operandRegisterMask) {
 }
 
 void dec (byte *registers[], byte operandRegisterMask) {
-    printf("DEC\n");
+    int i;
     unsigned long temp = 0; // Relevent registers will be copied here, using a 32 bit unsigned integer to handle underflow
-    for (int i = NUM_REGISTERS - 1; i >= 0; --i) { // Start with register D, since it should be the most significant byte
+    printf("DEC\n");
+    for (i = NUM_REGISTERS - 1; i >= 0; --i) { // Start with register D, since it should be the most significant byte
         if (operandRegisterMask & registerMasks[i]) {
             temp = temp << WORD_SIZE; // Make room for the next value (has no effect if temp is still 0)
             temp = temp | *registers[i]; // Put value of the register at the end of temp
         }
     }
     --temp;
-    for (int i = 0; i < NUM_REGISTERS; ++i) { // Start putting temp back into registers, starting with register A
+    for (i = 0; i < NUM_REGISTERS; ++i) { // Start putting temp back into registers, starting with register A
         if (operandRegisterMask & registerMasks[i]) {
             *registers[i] = (byte)temp; // Stores the least significant byte into the register
             temp = temp >> WORD_SIZE; // Shift values in temp to prepare for next iteration
@@ -128,17 +131,21 @@ void dec (byte *registers[], byte operandRegisterMask) {
 }
 
 void loadr (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
-    printf("LOADR\n");
+    int index;
+    int registersDone;
     byte sourceRegisterMask = vm->code[vm->pc++];
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     byte countOfSourceRegisters = bitCountLookup[sourceRegisterMask];
+    byte temp[NUM_REGISTERS]; // bytes read from code locations referenced from the source registers will be stored here temporarily
+    printf("LOADR\n");
+    
     if (countOfDestinationRegisters != countOfSourceRegisters) { // The number of source and destination registers must match to continue
         vm->flags = MINVM_EXCEPTION | MINVM_HALT;
         return;
     }
-    byte temp[NUM_REGISTERS]; // bytes read from code locations referenced from the source registers will be stored here temporarily
-    int index = 0;
-    int registersDone = 0;
+
+    index = 0;
+    registersDone = 0;
     while (registersDone < countOfSourceRegisters) { // Copy to temp
         if (sourceRegisterMask & registerMasks[index]) {
             temp[registersDone] = vm->code[*registers[index]];
@@ -158,16 +165,20 @@ void loadr (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMa
 }
 
 void add (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
-    printf("ADD\n");
+    int index;
+    int registersDone;
     byte sourceRegisterMask = vm->code[vm->pc++];
     byte countOfSourceRegisters = bitCountLookup[sourceRegisterMask];
+    byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
+    unsigned long operands[2]; // storing the operands as 32 bit unsigned integers to handle overflow
+    unsigned long result;
+    printf("ADD\n");
     if (countOfSourceRegisters != 2) { // The number of source registers must equal 2
         vm->flags = MINVM_EXCEPTION | MINVM_HALT;
         return;
     }
-    unsigned long operands[2]; // storing the operands as 32 bit unsigned integers to handle overflow
-    int index = 0;
-    int registersDone = 0;
+    index = 0;
+    registersDone = 0;
     while (registersDone < 2) { // Copy to operands array
         if (sourceRegisterMask & registerMasks[index]) {
             operands[registersDone] = *registers[index];
@@ -175,10 +186,9 @@ void add (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask
         }
         ++index;
     }
-    unsigned long result = operands[0] + operands[1];
+    result = operands[0] + operands[1];
     index = 0;
     registersDone = 0;
-    byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
     while (registersDone < countOfDestinationRegisters) { // Copy from result to destination registers
         if (destinationRegisterMask & registerMasks[index]) {
             *registers[index] = (byte)result; // Stores the least significant byte into the register
