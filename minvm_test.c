@@ -112,7 +112,7 @@ void dec (byte *registers[], byte operandRegisterMask) {
 void loadr (virtual_machine_t *vm, byte *registers[], byte destinationRegisterMask) {
     byte sourceRegisterMask = vm->code[vm->pc++];
     byte countOfDestinationRegisters = bitCountLookup[destinationRegisterMask];
-    byte data[NUM_REGISTERS]; // Bytes read from code locations referenced from the source registers will be stored here temporarily
+    byte data[NUM_REGISTERS]; // Temporary storage for data read from the code array
     byte *sourceRegisters[NUM_REGISTERS];
     byte *destinationRegisters[NUM_REGISTERS];
     byte count;
@@ -262,7 +262,7 @@ void jmpneq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask)
     byte jumpLocation = vm->code[vm->pc++];
     byte *relevantRegisters[NUM_REGISTERS];
     byte count = getRelevantRegisters(relevantRegisters, registers, operandRegisterMask);
-    if (count == 0) {
+    if (count == 0) { // Unconditional jump
         vm->pc = jumpLocation;
     }
     else if (count == 1) {
@@ -279,7 +279,7 @@ void jmpeq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask) 
     byte jumpLocation = vm->code[vm->pc++];
     byte *relevantRegisters[NUM_REGISTERS];
     byte count = getRelevantRegisters(relevantRegisters, registers, operandRegisterMask);
-    if (count == 0) {
+    if (count == 0) { // Unconditional jump
         vm->pc = jumpLocation;
     }
     else if (count == 1) {
@@ -298,7 +298,7 @@ void stor (virtual_machine_t *vm, byte *registers[], byte sourceRegisterMask) {
     byte count = getRelevantRegisters(sourceRegisters, registers, sourceRegisterMask);
     byte index;
     for (index = 0; index < count; ++index) {
-        vm->code[storeLocation++] = *sourceRegisters[index];
+        vm->code[storeLocation++] = *sourceRegisters[index]; // Write the contents of the specified registers to the code array
     }
 }
 
@@ -361,6 +361,7 @@ void storeByteInEachRegister (byte result, byte *registers[], byte destinationRe
     }
 }
 
+// Checks to see if all values in relevantRegisters are equal
 bool allRegistersEqual (byte *relevantRegisters[], byte count) {
     byte index;
     for (index = 1; index < count; index++) {
