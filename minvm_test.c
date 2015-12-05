@@ -262,7 +262,6 @@ void jmpneq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask)
     byte jumpLocation = vm->code[vm->pc++];
     byte *relevantRegisters[NUM_REGISTERS];
     byte count = getRelevantRegisters(relevantRegisters, registers, operandRegisterMask);
-    byte index;
     if (count == 0) {
         vm->pc = jumpLocation;
     }
@@ -271,13 +270,8 @@ void jmpneq (virtual_machine_t *vm, byte *registers[], byte operandRegisterMask)
             vm->pc = jumpLocation;
         }
     }
-    else {
-        for (index = 1; index < count; index++) {
-            if (*relevantRegisters[0] != *relevantRegisters[index]) {
-                vm->pc = jumpLocation;
-                break;
-            }
-        }
+    else if (!allRegistersEqual(relevantRegisters, count)) {
+        vm->pc = jumpLocation;
     }
 }
 
